@@ -1,0 +1,15 @@
+{
+  "name": "peter-jerry-ye/io",
+  "version": "0.1.0",
+  "deps": {
+    "peter-jerry-ye/async": "0.1.0",
+    "peter-jerry-ye/wasi-imports": "0.1.0",
+    "moonbitlang/x": "0.4.20"
+  },
+  "readme": "README.md",
+  "repository": "",
+  "license": "Apache-2.0",
+  "keywords": [],
+  "description": "",
+  "source": "src"
+}

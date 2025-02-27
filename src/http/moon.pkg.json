@@ -1,0 +1,11 @@
+{
+  "import": [
+    "peter-jerry-ye/async/loop",
+    "peter-jerry-ye/async/promise",
+    "peter-jerry-ye/wasi-imports/interface/wasi/http/types",
+    "peter-jerry-ye/io/io",
+    "peter-jerry-ye/wasi-imports/interface/wasi/http/outgoingHandler",
+    "peter-jerry-ye/wasi-imports/interface/wasi/io/streams",
+    "moonbitlang/x/encoding"
+  ]
+}

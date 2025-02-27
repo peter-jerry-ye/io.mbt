@@ -1,0 +1,16 @@
+package peter-jerry-ye/io/channel
+
+// Values
+fn make[A](size~ : UInt = ..) -> T[A]
+
+// Types and methods
+type T[A]
+impl T {
+  pop[A](Self[A]) -> A
+  push[A](Self[A], A) -> Unit
+}
+
+// Type aliases
+
+// Traits
+

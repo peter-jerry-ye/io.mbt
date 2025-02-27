@@ -1,0 +1,26 @@
+package peter-jerry-ye/io/http
+
+alias @peter-jerry-ye/async/loop as @loop
+alias @peter-jerry-ye/async/promise as @promise
+alias @peter-jerry-ye/io/io as @io
+alias @peter-jerry-ye/wasi-imports/interface/wasi/http/types as @types
+
+// Values
+fn bytes(@types.IncomingBody, event_loop~ : @loop.T[@io.Pollable] = ..) -> (@promise.T[Bytes], @promise.T[@types.Fields?])
+
+fn fetch(@types.OutgoingRequest, options? : @types.RequestOptions, event_loop~ : @loop.T[@io.Pollable] = ..) -> @promise.T[@types.IncomingResponse]
+
+fn headers(Map[String, Array[FixedArray[Byte]]]) -> @types.Fields
+
+fn json(@types.IncomingBody) -> (@promise.T[Json], @promise.T[@types.Fields?])
+
+fn request(String, path~ : String = .., headers~ : @types.Fields = .., method_~ : @types.Method = .., scheme? : @types.Scheme) -> @types.OutgoingRequest!
+
+fn text(@types.IncomingBody) -> (@promise.T[String], @promise.T[@types.Fields?])
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

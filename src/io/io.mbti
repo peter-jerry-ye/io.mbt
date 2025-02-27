@@ -1,0 +1,39 @@
+package peter-jerry-ye/io/io
+
+alias @moonbitlang/core/buffer as @buffer
+alias @peter-jerry-ye/async/loop as @loop
+alias @peter-jerry-ye/async/promise as @promise
+alias @peter-jerry-ye/wasi-imports/interface/wasi/io/poll as @poll
+alias @peter-jerry-ye/wasi-imports/interface/wasi/io/streams as @streams
+
+// Values
+let event_loop : @loop.T[Pollable]
+
+fn flush(@streams.OutputStream) -> Unit!
+
+fn pipe(@streams.InputStream, @streams.OutputStream, buffer_size~ : UInt64 = .., event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[Unit]
+
+fn print(String, stream~ : @streams.OutputStream = .., flush~ : Bool = .., event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[Unit]
+
+fn println(String, stream~ : @streams.OutputStream = .., flush~ : Bool = .., event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[Unit]
+
+fn read_all(stream~ : @streams.InputStream = .., buffer_size~ : UInt64 = .., event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[@buffer.T]
+
+fn read_line(stream~ : @streams.InputStream = .., event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[String]
+
+let stderr : @streams.OutputStream
+
+let stdin : @streams.InputStream
+
+let stdout : @streams.OutputStream
+
+fn write(FixedArray[Byte], @streams.OutputStream, event_loop~ : @loop.T[Pollable] = ..) -> @promise.T[Unit]
+
+// Types and methods
+pub(all) type Pollable @poll.Pollable
+impl @loop.Sync for Pollable
+
+// Type aliases
+
+// Traits
+
