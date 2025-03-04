@@ -1,8 +1,8 @@
 {
   "name": "peter-jerry-ye/io",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "deps": {
-    "peter-jerry-ye/async": "0.1.0",
+    "peter-jerry-ye/async": "0.1.1",
     "peter-jerry-ye/wasi-imports": "0.1.1",
     "moonbitlang/x": "0.4.21"
   },
