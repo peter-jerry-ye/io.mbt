@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "deps": {
     "peter-jerry-ye/async": "0.1.0",
-    "peter-jerry-ye/wasi-imports": "0.1.0",
+    "peter-jerry-ye/wasi-imports": "0.1.1",
     "moonbitlang/x": "0.4.21"
   },
   "readme": "README.md",
