@@ -27,7 +27,7 @@ pub fn read_line(
       Ok(bytes) => {
         if bytes.length() != 0 {
           if bytes[0] == b'\n' {
-            return @encoding.decode_strict(UTF8, buffer.contents()).to_string!()
+            return @encoding.decoder(UTF8).decode!(buffer.contents())
           } else {
             buffer.write_bytes(Bytes::from_fixedarray(bytes))
           }
@@ -39,7 +39,7 @@ pub fn read_line(
         if buffer.is_empty() {
           raise @streams.Closed
         } else {
-          @encoding.decode_strict(UTF8, buffer.contents()).to_string!()
+          @encoding.decoder(UTF8).decode!(buffer.contents())
         }
       Err(LastOperationFailed(error)) => raise error
     }

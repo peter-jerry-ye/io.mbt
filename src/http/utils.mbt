@@ -18,14 +18,8 @@ pub fn fetch(
   options? : @types.RequestOptions,
   event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> @promise.T[@types.IncomingResponse] {
-  let promise = @promise.make()
-  guard let Ok(future_response) = @outgoingHandler.handle(request, options) else {
-    Err(e) => {
-      promise.reject(e) |> ignore
-      promise.future()
-    }
-  }
   @promise.spawn(async fn(defer) {
+    let future_response = @outgoingHandler.handle(request, options).unwrap_or_error!()
     defer(fn() { future_response.drop() })
     event_loop.sync!!(future_response.subscribe())
     future_response.get().unwrap().unwrap().unwrap_or_error!()
@@ -83,9 +77,7 @@ pub fn text(
     bytes.bind(fn {
       content => {
         let promise = @promise.make()
-        promise.try_complete(fn() {
-          @encoding.decode_strict(UTF8, content).to_string!()
-        })
+        promise.try_complete(fn() { @encoding.decoder(UTF8).decode!(content) })
         |> ignore
         promise.future()
       }
@@ -130,17 +122,17 @@ pub fn request(
   scheme? : @types.Scheme
 ) -> @types.OutgoingRequest! {
   let request = @types.OutgoingRequest::outgoing_request(headers)
-  guard let Ok(_) = request.set_method(method_) else {
-    Err(_) => fail!("invalid request method: \{method_}")
+  guard request.set_method(method_) is Ok(_) else {
+    fail!("invalid request method: \{method_}")
   }
-  guard let Ok(_) = request.set_authority(Some(authority)) else {
-    Err(_) => fail!("invalid request authority: \{authority}")
+  guard request.set_authority(Some(authority)) is Ok(_) else {
+    fail!("invalid request authority: \{authority}")
   }
-  guard let Ok(_) = request.set_scheme(scheme) else {
-    Err(_) => fail!("invalid request scheme: \{scheme}")
+  guard request.set_scheme(scheme) is Ok(_) else {
+    fail!("invalid request scheme: \{scheme}")
   }
-  guard let Ok(_) = request.set_path_with_query(Some(path)) else {
-    Err(_) => fail!("invalid request path with query: \{path}")
+  guard request.set_path_with_query(Some(path)) is Ok(_) else {
+    fail!("invalid request path with query: \{path}")
   }
   request
 }
