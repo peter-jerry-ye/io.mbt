@@ -6,6 +6,7 @@
     "peter-jerry-ye/io/io",
     "peter-jerry-ye/wasi-imports/interface/wasi/http/outgoingHandler",
     "peter-jerry-ye/wasi-imports/interface/wasi/io/streams",
-    "moonbitlang/x/encoding"
+    "moonbitlang/x/encoding",
+    "peter-jerry-ye/wasi-imports/interface/wasi/io/poll"
   ]
 }

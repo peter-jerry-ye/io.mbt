@@ -33,20 +33,44 @@ pub async fn fetch(
 }
 
 ///|
+pub fn fetch_sync(
+  request : @types.OutgoingRequest,
+  options? : @types.RequestOptions
+) -> @types.IncomingResponse! {
+  let future_response = @outgoingHandler.handle(request, options).unwrap_or_error!()
+  let pollable = future_response.subscribe()
+  pollable.block()
+  pollable.drop()
+  match future_response.get().unwrap().unwrap() {
+    Ok(response) => {
+      future_response.drop()
+      response
+    }
+    Err(error) => {
+      future_response.drop()
+      raise error
+    }
+  }
+}
+
+///|
 /// Consume the body and return the bytes
 /// 
-/// The body is finished after this function is called
+/// The body is finished after this function is called.  
+/// This function fails if the body stream is already consumed
+/// 
+/// @return a tuple of the bytes and the trailers
 pub fn bytes(
   body : @types.IncomingBody,
   event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> (@promise.T[Bytes], @promise.T[@types.Fields?]) {
   let fields = @promise.make()
-  guard body.stream() is Ok(stream)
   let bytes = @promise.spawn(async fn(defer) {
-    defer(fn() {
-      stream.drop()
-      fields.resolve(body.finish())
-    })
+    defer(fn() { fields.resolve(body.finish()) })
+    guard body.stream() is Ok(stream) else {
+      raise IllegalArgument("invalid body : stream is consumed")
+    }
+    defer(fn() { stream.drop() })
     @io.read_all!!(stream~).contents()
   })
   (
@@ -65,7 +89,34 @@ pub fn bytes(
 }
 
 ///|
+pub fn bytes_sync(body : @types.IncomingBody) -> (Bytes, @types.Fields?)! {
+  guard body.stream() is Ok(stream) else {
+    raise IllegalArgument("invalid body : stream is consumed")
+  }
+  let bytes = try {
+    @io.read_all_sync!(stream~).contents()
+  } catch {
+    error => {
+      body.finish() |> ignore
+      raise error
+    }
+  }
+  let trailers = body.finish()
+  let pollable = trailers.subscribe()
+  pollable.block()
+  pollable.drop()
+  (bytes, trailers.get().unwrap().unwrap().unwrap_or_error!())
+}
+
+///|
+/// Consume the body and return the content as text
+/// 
+/// The body is finished after this function is called.  
+/// This function fails if the body stream is already consumed
+/// 
 /// TODO: stream encoding
+/// 
+/// @return a tuple of the text and the trailers
 pub fn text(
   body : @types.IncomingBody
 ) -> (@promise.T[String], @promise.T[@types.Fields?]) {
@@ -84,7 +135,20 @@ pub fn text(
 }
 
 ///|
+pub fn text_sync(body : @types.IncomingBody) -> (String, @types.Fields?)! {
+  let (bytes, trailers) = bytes_sync!(body)
+  (@encoding.decoder(UTF8).decode!(bytes), trailers)
+}
+
+///|
+/// Consume the body and return the content as json
+/// 
+/// The body is finished after this function is called.  
+/// This function fails if the body stream is already consumed
+/// 
 /// TODO: stream parsing
+/// 
+/// @return a tuple of the json and the trailers
 pub fn json(
   body : @types.IncomingBody
 ) -> (@promise.T[Json], @promise.T[@types.Fields?]) {
@@ -99,6 +163,12 @@ pub fn json(
     }),
     trailers,
   )
+}
+
+///|
+pub fn json_sync(body : @types.IncomingBody) -> (Json, @types.Fields?)! {
+  let (text, trailers) = text_sync!(body)
+  (@json.parse!(text), trailers)
 }
 
 ///|
