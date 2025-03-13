@@ -45,6 +45,30 @@ pub async fn read_line(
 }
 
 ///|
+pub fn read_line_sync(stream~ : @streams.InputStream = stdin) -> String! {
+  let buffer = @buffer.new()
+  loop stream.blocking_read(1) {
+    Ok(bytes) => {
+      if bytes.length() != 0 {
+        if bytes[0] == b'\n' {
+          return @encoding.decoder(UTF8).decode!(buffer.contents())
+        } else {
+          buffer.write_bytes(Bytes::from_fixedarray(bytes))
+        }
+      }
+      continue stream.blocking_read(1)
+    }
+    Err(Closed) =>
+      if buffer.is_empty() {
+        raise @streams.Closed
+      } else {
+        @encoding.decoder(UTF8).decode!(buffer.contents())
+      }
+    Err(LastOperationFailed(error)) => raise error
+  }
+}
+
+///|
 pub async fn read_all(
   stream~ : @streams.InputStream = stdin,
   buffer_size~ : UInt64 = 1024,
@@ -71,6 +95,25 @@ pub async fn read_all(
 }
 
 ///|
+pub fn read_all_sync(
+  stream~ : @streams.InputStream = stdin,
+  buffer_size~ : UInt64 = 1024
+) -> @buffer.T! {
+  let buffer = @buffer.new()
+  loop stream.blocking_read(buffer_size) {
+    Ok(read) => {
+      if read.length() != 0 {
+        buffer.write_bytes(Bytes::from_fixedarray(read))
+      }
+      continue stream.blocking_read(buffer_size)
+    }
+    Err(Closed) => if buffer.is_empty() { raise @streams.Closed } else { break }
+    Err(LastOperationFailed(error)) => raise error
+  }
+  buffer
+}
+
+///|
 pub async fn write(
   contents : FixedArray[Byte],
   stream : @streams.OutputStream,
@@ -81,27 +124,42 @@ pub async fn write(
   event_loop.sync!!(stream.subscribe())
   loop stream.check_write() {
     Ok(can_write) =>
-      try {
-        if can_write >= (length - all_bytes_written).to_uint64() {
-          stream.write(contents).unwrap_or_error!()
-          stream.flush().unwrap_or_error!()
-        } else {
-          let buffer = FixedArray::make(can_write.to_int(), b'\x00')
-          contents.blit_to(
-            buffer,
-            len=can_write.to_int(),
-            src_offset=all_bytes_written,
-          )
-          stream.write(buffer).unwrap_or_error!()
-          stream.flush().unwrap_or_error!()
-          all_bytes_written += can_write.to_int()
-          event_loop.sync!!(stream.subscribe())
-          continue stream.check_write()
-        }
-      } catch {
-        error => raise error
+      if can_write >= (length - all_bytes_written).to_uint64() {
+        stream.write(contents).unwrap_or_error!()
+      } else {
+        let buffer = FixedArray::make(can_write.to_int(), b'\x00')
+        contents.blit_to(
+          buffer,
+          len=can_write.to_int(),
+          src_offset=all_bytes_written,
+        )
+        stream.write(buffer).unwrap_or_error!()
+        all_bytes_written += can_write.to_int()
+        event_loop.sync!!(stream.subscribe())
+        continue stream.check_write()
       }
     Err(error) => raise error
+  }
+}
+
+///|
+pub fn write_sync(
+  contents : FixedArray[Byte],
+  stream : @streams.OutputStream
+) -> Unit! {
+  let length = contents.length()
+  let flush_length = length - 4096
+  let mut all_bytes_written = 0
+  let buffer = FixedArray::make(4096, b'\x00')
+  while all_bytes_written < flush_length {
+    contents.blit_to(buffer, len=4096, src_offset=all_bytes_written)
+    stream.blocking_write_and_flush(buffer).unwrap_or_error!()
+    all_bytes_written += 4096
+  } else {
+    let rest = length - all_bytes_written
+    let buffer = FixedArray::make(rest, b'\x00')
+    contents.blit_to(buffer, len=rest, src_offset=all_bytes_written)
+    stream.blocking_write_and_flush(buffer).unwrap_or_error!()
   }
 }
 
@@ -156,4 +214,12 @@ pub async fn println(
   if flush {
     stream.flush().unwrap_or_error!()
   }
+}
+
+///|
+pub fn println_sync(
+  string : String,
+  stream~ : @streams.OutputStream = stdout
+) -> Unit! {
+  @encoding.encode(UTF8, "\{string}\n").to_fixedarray() |> write_sync!(stream)
 }
