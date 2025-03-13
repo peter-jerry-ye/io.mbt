@@ -13,17 +13,23 @@
 // limitations under the License.
 
 ///|
-pub fn fetch(
+pub async fn fetch(
   request : @types.OutgoingRequest,
   options? : @types.RequestOptions,
   event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
-) -> @promise.T[@types.IncomingResponse] {
-  @promise.spawn(async fn(defer) {
-    let future_response = @outgoingHandler.handle(request, options).unwrap_or_error!()
-    defer(fn() { future_response.drop() })
-    event_loop.sync!!(future_response.subscribe())
-    future_response.get().unwrap().unwrap().unwrap_or_error!()
-  })
+) -> @types.IncomingResponse! {
+  let future_response = @outgoingHandler.handle(request, options).unwrap_or_error!()
+  event_loop.sync!!(future_response.subscribe())
+  match future_response.get().unwrap().unwrap() {
+    Ok(response) => {
+      future_response.drop()
+      response
+    }
+    Err(error) => {
+      future_response.drop()
+      raise error
+    }
+  }
 }
 
 ///|
@@ -34,26 +40,17 @@ pub fn bytes(
   body : @types.IncomingBody,
   event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> (@promise.T[Bytes], @promise.T[@types.Fields?]) {
-  let bytes = @promise.make()
   let fields = @promise.make()
-  let stream = body.stream().unwrap()
-  let result = @io.read_all(stream~)
-  result.on_success(fn {
-    content => {
+  guard body.stream() is Ok(stream)
+  let bytes = @promise.spawn(async fn(defer) {
+    defer(fn() {
       stream.drop()
       fields.resolve(body.finish())
-      bytes.resolve(content.contents())
-    }
-  })
-  result.on_failure(fn {
-    e => {
-      stream.drop()
-      fields.resolve(body.finish())
-      bytes.reject(e)
-    }
+    })
+    @io.read_all!!(stream~).contents()
   })
   (
-    bytes.future(),
+    bytes,
     fields
     .future()
     .bind(fn {
@@ -105,10 +102,10 @@ pub fn json(
 }
 
 ///|
-pub fn headers(headers : Map[String, Array[FixedArray[Byte]]]) -> @types.Fields {
+pub fn headers(headers : Map[String, Array[Bytes]]) -> @types.Fields {
   let fields = @types.Fields::fields()
   for k, v in headers {
-    fields.set(k, v).unwrap()
+    fields.set(k, v.map(fn(bytes) { bytes.to_fixedarray() })).unwrap()
   }
   fields
 }
@@ -120,19 +117,38 @@ pub fn request(
   headers~ : @types.Fields = @types.Fields::fields(),
   method_~ : @types.Method = Get,
   scheme? : @types.Scheme
-) -> @types.OutgoingRequest! {
+) -> @types.OutgoingRequest!IllegalArgument {
   let request = @types.OutgoingRequest::outgoing_request(headers)
   guard request.set_method(method_) is Ok(_) else {
-    fail!("invalid request method: \{method_}")
+    raise IllegalArgument("invalid request method: \{method_}")
   }
   guard request.set_authority(Some(authority)) is Ok(_) else {
-    fail!("invalid request authority: \{authority}")
+    raise IllegalArgument("invalid request authority: \{authority}")
   }
   guard request.set_scheme(scheme) is Ok(_) else {
-    fail!("invalid request scheme: \{scheme}")
+    raise IllegalArgument("invalid request scheme: \{scheme}")
   }
   guard request.set_path_with_query(Some(path)) is Ok(_) else {
-    fail!("invalid request path with query: \{path}")
+    raise IllegalArgument("invalid request path with query: \{path}")
   }
   request
 }
+
+///|
+pub fn response(
+  status : UInt,
+  headers~ : Map[String, Array[Bytes]] = {}
+) -> @types.OutgoingResponse!IllegalArgument {
+  let fields = @types.Fields::fields()
+  for k, v in headers {
+    fields.set(k, v.map(fn(bytes) { bytes.to_fixedarray() })).unwrap()
+  }
+  let response = @types.OutgoingResponse::outgoing_response(fields)
+  guard response.set_status_code(status) is Ok(_) else {
+    raise IllegalArgument("invalid status code: \{status}")
+  }
+  response
+}
+
+///|
+pub type! IllegalArgument String
