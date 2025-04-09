@@ -118,9 +118,10 @@ pub fn bytes_sync(body : @types.IncomingBody) -> (Bytes, @types.Fields?)! {
 /// 
 /// @return a tuple of the text and the trailers
 pub fn text(
-  body : @types.IncomingBody
+  body : @types.IncomingBody,
+  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> (@promise.T[String], @promise.T[@types.Fields?]) {
-  let (bytes, trailers) = bytes(body)
+  let (bytes, trailers) = bytes(body, event_loop~)
   (
     bytes.bind(fn {
       content => {
@@ -150,9 +151,10 @@ pub fn text_sync(body : @types.IncomingBody) -> (String, @types.Fields?)! {
 /// 
 /// @return a tuple of the json and the trailers
 pub fn json(
-  body : @types.IncomingBody
+  body : @types.IncomingBody,
+  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> (@promise.T[Json], @promise.T[@types.Fields?]) {
-  let (text, trailers) = text(body)
+  let (text, trailers) = text(body, event_loop~)
   (
     text.bind(fn {
       text =>
