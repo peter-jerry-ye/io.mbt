@@ -38,6 +38,11 @@ impl[T : OutputStream] Writer for OutputStreamWriter[T] with write(self, string)
   self.stream.write(@encoding.encode(self.encoding, string))
 }
 
+///|
+impl[T : OutputStream] Flushable for OutputStreamWriter[T] with flush(self) {
+  self.stream.flush()
+}
+
 ///| Create a writer from an output stream through the given encoding.
 pub fn output_stream_writer[T : OutputStream](
   stream : T,
