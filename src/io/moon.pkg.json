@@ -1,11 +1,16 @@
 {
   "import": [
     "peter-jerry-ye/async/loop",
+    "peter-jerry-ye/async/stream",
+    "peter-jerry-ye/async/promise",
     "peter-jerry-ye/wasi-imports/interface/wasi/io/poll",
     "peter-jerry-ye/wasi-imports/interface/wasi/io/streams",
-    "moonbitlang/x/encoding",
     "peter-jerry-ye/wasi-imports/interface/wasi/cli/stdin",
     "peter-jerry-ye/wasi-imports/interface/wasi/cli/stdout",
-    "peter-jerry-ye/wasi-imports/interface/wasi/cli/stderr"
+    "peter-jerry-ye/wasi-imports/interface/wasi/cli/stderr",
+    "tonyfettes/encoding"
+  ],
+  "supported-targets": [
+    "wasm"
   ]
 }

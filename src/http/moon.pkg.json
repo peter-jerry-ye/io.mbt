@@ -6,7 +6,10 @@
     "peter-jerry-ye/io/io",
     "peter-jerry-ye/wasi-imports/interface/wasi/http/outgoingHandler",
     "peter-jerry-ye/wasi-imports/interface/wasi/io/streams",
-    "moonbitlang/x/encoding",
+    "tonyfettes/encoding",
     "peter-jerry-ye/wasi-imports/interface/wasi/io/poll"
+  ],
+  "supported-targets": [
+    "wasm"
   ]
 }

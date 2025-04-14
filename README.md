@@ -1,8 +1,7 @@
 # IO Library
 
-This library provides:
+This library provides (based on Wasm Component Model):
 
-- `channel`: an async channel
 - `io`: performing an IO operation, provided by wasi-cli v0.2.0
 - `http`: sending HTTP requests, provided by wasi-http v0.2.0
 
@@ -17,3 +16,7 @@ Typically, one should first define operations using `@promise.spawn`, and then u
 - Add more utility functions, such as read a buffer
 - Add sync operations so that we don't rely on the event loop
 - Add documentation
+
+## Breaking Changes from 0.2.0
+
+The `channel` and `stream` packages have been migrated to `peter-jerry-ye/async`.

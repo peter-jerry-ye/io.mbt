@@ -1,6 +1,0 @@
-{
-  "import": [
-    "peter-jerry-ye/async/promise",
-    "moonbitlang/x/encoding"
-  ]
-}
