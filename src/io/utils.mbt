@@ -21,7 +21,7 @@ pub async fn read_line(
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> String! {
   let buffer = @buffer.new()
-  event_loop.sync!!(stream.subscribe())
+  event_loop.sync!(stream.subscribe())
   loop stream.read(1) {
     Ok(bytes) => {
       if bytes.length() != 0 {
@@ -31,7 +31,7 @@ pub async fn read_line(
           buffer.write_bytes(Bytes::from_fixedarray(bytes))
         }
       }
-      event_loop.sync!!(stream.subscribe())
+      event_loop.sync!(stream.subscribe())
       continue stream.read(1)
     }
     Err(Closed) =>
@@ -75,13 +75,13 @@ pub async fn read_all(
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> @buffer.T! {
   let buffer = @buffer.new()
-  event_loop.sync!!(stream.subscribe())
+  event_loop.sync!(stream.subscribe())
   loop stream.read(buffer_size) {
     Ok(read) => {
       if read.length() != 0 {
         buffer.write_bytes(Bytes::from_fixedarray(read))
       }
-      event_loop.sync!!(stream.subscribe())
+      event_loop.sync!(stream.subscribe())
       continue stream.read(buffer_size)
     }
     Err(Closed) =>
@@ -121,7 +121,7 @@ pub async fn write(
 ) -> Unit! {
   let length = contents.length()
   let mut all_bytes_written = 0
-  event_loop.sync!!(stream.subscribe())
+  event_loop.sync!(stream.subscribe())
   loop stream.check_write() {
     Ok(can_write) =>
       if can_write >= (length - all_bytes_written).to_uint64() {
@@ -135,7 +135,7 @@ pub async fn write(
         )
         stream.write(buffer).unwrap_or_error!()
         all_bytes_written += can_write.to_int()
-        event_loop.sync!!(stream.subscribe())
+        event_loop.sync!(stream.subscribe())
         continue stream.check_write()
       }
     Err(error) => raise error
@@ -175,13 +175,13 @@ pub async fn pipe(
   buffer_size~ : UInt64 = 1024,
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> Unit! {
-  event_loop.sync!!(input.subscribe())
+  event_loop.sync!(input.subscribe())
   loop input.read(buffer_size) {
     Ok(read) => {
       if read.length() != 0 {
-        write!!(read, output)
+        write!(read, output)
       }
-      event_loop.sync!!(input.subscribe())
+      event_loop.sync!(input.subscribe())
       continue input.read(1024)
     }
     Err(Closed) => ()
@@ -196,7 +196,7 @@ pub async fn print(
   flush~ : Bool = true,
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> Unit! {
-  @encoding.encode(UTF8, string).to_fixedarray() |> write!!(stream, event_loop~)
+  @encoding.encode(UTF8, string).to_fixedarray() |> write!(stream, event_loop~)
   if flush {
     stream.flush().unwrap_or_error!()
   }
@@ -210,7 +210,7 @@ pub async fn println(
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> Unit! {
   @encoding.encode(UTF8, "\{string}\n").to_fixedarray()
-  |> write!!(stream, event_loop~)
+  |> write!(stream, event_loop~)
   if flush {
     stream.flush().unwrap_or_error!()
   }

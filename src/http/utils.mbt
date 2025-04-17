@@ -19,7 +19,7 @@ pub async fn fetch(
   event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
 ) -> @types.IncomingResponse! {
   let future_response = @outgoingHandler.handle(request, options).unwrap_or_error!()
-  event_loop.sync!!(future_response.subscribe())
+  event_loop.sync!(future_response.subscribe())
   match future_response.get().unwrap().unwrap() {
     Ok(response) => {
       future_response.drop()
@@ -71,7 +71,7 @@ pub fn bytes(
       raise IllegalArgument("invalid body : stream is consumed")
     }
     defer(fn() { stream.drop() })
-    @io.read_all!!(stream~).contents()
+    @io.read_all!(stream~).contents()
   })
   (
     bytes,
@@ -80,7 +80,7 @@ pub fn bytes(
     .bind(fn {
       future_trailers =>
         @promise.spawn(async fn(defer) {
-          event_loop.sync!!(future_trailers.subscribe())
+          event_loop.sync!(future_trailers.subscribe())
           defer(fn() { future_trailers.drop() })
           future_trailers.get().unwrap().unwrap().unwrap_or_error!()
         })
