@@ -196,7 +196,8 @@ pub async fn print(
   flush~ : Bool = true,
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> Unit! {
-  @encoding.encode(UTF8, string).to_fixedarray() |> write!(stream, event_loop~)
+  @encoding.encode(encoding=UTF8, string).to_fixedarray()
+  |> write!(stream, event_loop~)
   if flush {
     stream.flush().unwrap_or_error!()
   }
@@ -209,7 +210,7 @@ pub async fn println(
   flush~ : Bool = true,
   event_loop~ : @loop.T[Pollable] = event_loop
 ) -> Unit! {
-  @encoding.encode(UTF8, "\{string}\n").to_fixedarray()
+  @encoding.encode(encoding=UTF8, "\{string}\n").to_fixedarray()
   |> write!(stream, event_loop~)
   if flush {
     stream.flush().unwrap_or_error!()
@@ -221,5 +222,6 @@ pub fn println_sync(
   string : String,
   stream~ : @streams.OutputStream = stdout
 ) -> Unit! {
-  @encoding.encode(UTF8, "\{string}\n").to_fixedarray() |> write_sync!(stream)
+  @encoding.encode(encoding=UTF8, "\{string}\n").to_fixedarray()
+  |> write_sync!(stream)
 }
