@@ -17,9 +17,9 @@ pub(all) type Pollable @poll.Pollable
 
 ///|
 pub impl @loop.Sync for Pollable with sync(array) {
-  let result = @poll.poll(array.map(fn { Pollable(p) => p }))
+  let result = @poll.poll(array.map(_.inner()))
   for i in result {
-    array[i.reinterpret_as_int()]._.drop()
+    array[i.reinterpret_as_int()].inner().drop()
   }
   result
 }

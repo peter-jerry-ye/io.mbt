@@ -1,8 +1,8 @@
 {
   "name": "peter-jerry-ye/io",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "deps": {
-    "peter-jerry-ye/async": "0.1.6",
+    "peter-jerry-ye/async": "0.1.7",
     "peter-jerry-ye/wasi-imports": "0.1.4"
   },
   "readme": "README.md",
