@@ -13,7 +13,7 @@
 // limitations under the License.
 
 ///|
-pub(all) type Pollable @poll.Pollable
+pub(all) struct Pollable(@poll.Pollable)
 
 ///|
 pub impl @loop.Sync for Pollable with sync(array) {

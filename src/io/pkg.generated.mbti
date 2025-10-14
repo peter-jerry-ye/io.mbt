@@ -1,0 +1,61 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "peter-jerry-ye/io/io"
+
+import(
+  "moonbitlang/core/buffer"
+  "peter-jerry-ye/async/loop"
+  "peter-jerry-ye/async/stream"
+  "peter-jerry-ye/wasi-imports/interface/wasi/io/poll"
+  "peter-jerry-ye/wasi-imports/interface/wasi/io/streams"
+)
+
+// Values
+let event_loop : @loop.T[Pollable]
+
+fn flush(@streams.OutputStream) -> Unit raise
+
+async fn pipe(@streams.InputStream, @streams.OutputStream, buffer_size? : UInt64, event_loop? : @loop.T[Pollable]) -> Unit
+
+async fn print(String, stream? : @streams.OutputStream, flush? : Bool, event_loop? : @loop.T[Pollable]) -> Unit
+
+async fn println(String, stream? : @streams.OutputStream, flush? : Bool, event_loop? : @loop.T[Pollable]) -> Unit
+
+fn println_sync(String, stream? : @streams.OutputStream) -> Unit raise
+
+async fn read_all(stream? : @streams.InputStream, buffer_size? : UInt64, event_loop? : @loop.T[Pollable]) -> @buffer.Buffer
+
+fn read_all_sync(stream? : @streams.InputStream, buffer_size? : UInt64) -> @buffer.Buffer raise
+
+async fn read_line(stream? : @streams.InputStream, event_loop? : @loop.T[Pollable]) -> String
+
+fn read_line_sync(stream? : @streams.InputStream) -> String raise
+
+let stderr : @streams.OutputStream
+
+let stderr_stream : &@stream.OutputStream
+
+let stdin : @streams.InputStream
+
+let stdin_stream : &@stream.InputStream
+
+let stdout : @streams.OutputStream
+
+let stdout_stream : &@stream.OutputStream
+
+async fn write(FixedArray[Byte], @streams.OutputStream, event_loop? : @loop.T[Pollable]) -> Unit
+
+fn write_sync(FixedArray[Byte], @streams.OutputStream) -> Unit raise
+
+// Errors
+
+// Types and methods
+pub(all) struct Pollable(@poll.Pollable)
+#deprecated
+fn Pollable::inner(Self) -> @poll.Pollable
+fn Pollable::sync(Array[Self]) -> FixedArray[UInt] // from trait `@loop.Sync`
+impl @loop.Sync for Pollable
+
+// Type aliases
+
+// Traits
+

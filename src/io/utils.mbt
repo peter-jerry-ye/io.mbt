@@ -17,9 +17,9 @@ pub let event_loop : @loop.T[Pollable] = @loop.new()
 
 ///|
 pub async fn read_line(
-  stream~ : @streams.InputStream = stdin,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> String raise {
+  stream? : @streams.InputStream = stdin,
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> String {
   let buffer = @buffer.new()
   event_loop.sync(stream.subscribe())
   loop stream.read(1) {
@@ -45,7 +45,7 @@ pub async fn read_line(
 }
 
 ///|
-pub fn read_line_sync(stream~ : @streams.InputStream = stdin) -> String raise {
+pub fn read_line_sync(stream? : @streams.InputStream = stdin) -> String raise {
   let buffer = @buffer.new()
   loop stream.blocking_read(1) {
     Ok(bytes) => {
@@ -70,10 +70,10 @@ pub fn read_line_sync(stream~ : @streams.InputStream = stdin) -> String raise {
 
 ///|
 pub async fn read_all(
-  stream~ : @streams.InputStream = stdin,
-  buffer_size~ : UInt64 = 1024,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> @buffer.T raise {
+  stream? : @streams.InputStream = stdin,
+  buffer_size? : UInt64 = 1024,
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> @buffer.Buffer {
   let buffer = @buffer.new()
   event_loop.sync(stream.subscribe())
   loop stream.read(buffer_size) {
@@ -96,9 +96,9 @@ pub async fn read_all(
 
 ///|
 pub fn read_all_sync(
-  stream~ : @streams.InputStream = stdin,
-  buffer_size~ : UInt64 = 1024
-) -> @buffer.T raise {
+  stream? : @streams.InputStream = stdin,
+  buffer_size? : UInt64 = 1024,
+) -> @buffer.Buffer raise {
   let buffer = @buffer.new()
   loop stream.blocking_read(buffer_size) {
     Ok(read) => {
@@ -117,8 +117,8 @@ pub fn read_all_sync(
 pub async fn write(
   contents : FixedArray[Byte],
   stream : @streams.OutputStream,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> Unit raise {
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> Unit {
   let length = contents.length()
   let mut all_bytes_written = 0
   event_loop.sync(stream.subscribe())
@@ -145,7 +145,7 @@ pub async fn write(
 ///|
 pub fn write_sync(
   contents : FixedArray[Byte],
-  stream : @streams.OutputStream
+  stream : @streams.OutputStream,
 ) -> Unit raise {
   let length = contents.length()
   let flush_length = length - 4096
@@ -172,9 +172,9 @@ pub fn flush(stream : @streams.OutputStream) -> Unit raise {
 pub async fn pipe(
   input : @streams.InputStream,
   output : @streams.OutputStream,
-  buffer_size~ : UInt64 = 1024,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> Unit raise {
+  buffer_size? : UInt64 = 1024,
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> Unit {
   event_loop.sync(input.subscribe())
   loop input.read(buffer_size) {
     Ok(read) => {
@@ -192,10 +192,10 @@ pub async fn pipe(
 ///|
 pub async fn print(
   string : String,
-  stream~ : @streams.OutputStream = stdout,
-  flush~ : Bool = true,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> Unit raise {
+  stream? : @streams.OutputStream = stdout,
+  flush? : Bool = true,
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> Unit {
   @encoding.encode(encoding=UTF8, string).to_fixedarray()
   |> write(stream, event_loop~)
   if flush {
@@ -206,10 +206,10 @@ pub async fn print(
 ///|
 pub async fn println(
   string : String,
-  stream~ : @streams.OutputStream = stdout,
-  flush~ : Bool = true,
-  event_loop~ : @loop.T[Pollable] = event_loop
-) -> Unit raise {
+  stream? : @streams.OutputStream = stdout,
+  flush? : Bool = true,
+  event_loop? : @loop.T[Pollable] = event_loop,
+) -> Unit {
   @encoding.encode(encoding=UTF8, "\{string}\n").to_fixedarray()
   |> write(stream, event_loop~)
   if flush {
@@ -220,7 +220,7 @@ pub async fn println(
 ///|
 pub fn println_sync(
   string : String,
-  stream~ : @streams.OutputStream = stdout
+  stream? : @streams.OutputStream = stdout,
 ) -> Unit raise {
   @encoding.encode(encoding=UTF8, "\{string}\n").to_fixedarray()
   |> write_sync(stream)

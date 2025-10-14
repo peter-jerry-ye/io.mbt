@@ -16,8 +16,8 @@
 pub async fn fetch(
   request : @types.OutgoingRequest,
   options? : @types.RequestOptions,
-  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
-) -> @types.IncomingResponse raise {
+  event_loop? : @loop.T[@io.Pollable] = @io.event_loop,
+) -> @types.IncomingResponse {
   let future_response = @outgoingHandler.handle(request, options).unwrap_or_error()
   event_loop.sync(future_response.subscribe())
   match future_response.get().unwrap().unwrap() {
@@ -35,7 +35,7 @@ pub async fn fetch(
 ///|
 pub fn fetch_sync(
   request : @types.OutgoingRequest,
-  options? : @types.RequestOptions
+  options? : @types.RequestOptions,
 ) -> @types.IncomingResponse raise {
   let future_response = @outgoingHandler.handle(request, options).unwrap_or_error()
   let pollable = future_response.subscribe()
@@ -62,24 +62,24 @@ pub fn fetch_sync(
 /// @return a tuple of the bytes and the trailers
 pub fn bytes(
   body : @types.IncomingBody,
-  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
+  event_loop? : @loop.T[@io.Pollable] = @io.event_loop,
 ) -> (@promise.T[Bytes], @promise.T[@types.Fields?]) {
   let fields = @promise.make()
-  let bytes = @promise.spawn(async fn(defer_) {
-    defer_(fn() { fields.resolve(body.finish()) })
+  let bytes = @promise.spawn(async fn() {
+    defer fields.resolve(body.finish())
     guard body.stream() is Ok(stream) else {
       raise IllegalArgument("invalid body : stream is consumed")
     }
-    defer_(fn() { stream.drop() })
+    defer stream.drop()
     @io.read_all(stream~).contents()
   })
   (
     bytes,
     fields
     .future()
-    .bind(future_trailers => @promise.spawn(async fn(defer_) {
+    .bind(future_trailers => @promise.spawn(async fn() {
+      defer future_trailers.drop()
       event_loop.sync(future_trailers.subscribe())
-      defer_(fn() { future_trailers.drop() })
       future_trailers.get().unwrap().unwrap().unwrap_or_error()
     })),
   )
@@ -114,7 +114,7 @@ pub fn bytes_sync(body : @types.IncomingBody) -> (Bytes, @types.Fields?) raise {
 /// @return a tuple of the text and the trailers
 pub fn text(
   body : @types.IncomingBody,
-  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
+  event_loop? : @loop.T[@io.Pollable] = @io.event_loop,
 ) -> (@promise.T[String], @promise.T[@types.Fields?]) {
   let (bytes, trailers) = bytes(body, event_loop~)
   (
@@ -145,7 +145,7 @@ pub fn text_sync(body : @types.IncomingBody) -> (String, @types.Fields?) raise {
 /// @return a tuple of the json and the trailers
 pub fn json(
   body : @types.IncomingBody,
-  event_loop~ : @loop.T[@io.Pollable] = @io.event_loop
+  event_loop? : @loop.T[@io.Pollable] = @io.event_loop,
 ) -> (@promise.T[Json], @promise.T[@types.Fields?]) {
   let (text, trailers) = text(body, event_loop~)
   (
@@ -174,10 +174,10 @@ pub fn headers(headers : Map[String, Array[Bytes]]) -> @types.Fields {
 ///|
 pub fn request(
   authority : String,
-  path~ : String = "/",
-  headers~ : @types.Fields = @types.Fields::fields(),
-  method_~ : @types.Method = Get,
-  scheme? : @types.Scheme
+  path? : String = "/",
+  headers? : @types.Fields = @types.Fields::fields(),
+  method_? : @types.Method = Get,
+  scheme? : @types.Scheme,
 ) -> @types.OutgoingRequest raise IllegalArgument {
   let request = @types.OutgoingRequest::outgoing_request(headers)
   guard request.set_method(method_) is Ok(_) else {
@@ -198,7 +198,7 @@ pub fn request(
 ///|
 pub fn response(
   status : UInt,
-  headers~ : Map[String, Array[Bytes]] = {}
+  headers? : Map[String, Array[Bytes]] = {},
 ) -> @types.OutgoingResponse raise IllegalArgument {
   let fields = @types.Fields::fields()
   for k, v in headers {

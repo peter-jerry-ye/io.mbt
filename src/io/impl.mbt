@@ -14,27 +14,21 @@ impl @stream.Closable for In with close(self) {
 }
 
 ///|
-impl @stream.Closable for In with closed(self) {
-  self.dropped || self.stream.read(0) == Err(Closed)
-}
-
-///|
-impl @stream.InputStream for In with read(self, len) {
-  read_in(self, len)
-}
-
-///|
-fn read_in(in_ : In, len : UInt64) -> @promise.T[Bytes] {
-  @promise.spawn(async fn(_defer) {
-    in_.ev.sync(in_.stream.subscribe())
-    let bytes = in_.stream.read(len).unwrap_or_error()
-    Bytes::from_fixedarray(bytes)
+impl @stream.InputStream for In with read(
+  self,
+  array,
+  offset? = 0,
+  max_len? = array.length(),
+) {
+  @promise.spawn(async fn() {
+    self.ev.sync(self.stream.subscribe())
+    let bytes = self.stream.read(max_len.to_uint64()).unwrap_or_error() catch {
+      Closed => return None
+      e => raise e
+    }
+    bytes.blit_to(array, len=bytes.length(), src_offset=offset)
+    Some(bytes.length())
   })
-}
-
-///|
-impl @stream.InputStream for In with readable(self) {
-  not(self.dropped) && self.stream.read(0) is Ok(_)
 }
 
 ///|
@@ -53,11 +47,6 @@ impl @stream.Closable for Out with close(self) {
 }
 
 ///|
-impl @stream.Closable for Out with closed(self) {
-  self.dropped || self.stream.check_write() == Err(Closed)
-}
-
-///|
 impl @stream.Flushable for Out with flush(self) {
   match self.stream.flush() {
     Ok(_) => @promise.resolve(())
@@ -67,20 +56,12 @@ impl @stream.Flushable for Out with flush(self) {
 
 ///|
 impl @stream.OutputStream for Out with write(self, bytes) {
-  write_out(self, bytes)
-}
-
-///|
-fn write_out(out : Out, bytes : Bytes) -> @promise.T[Unit] {
-  @promise.spawn(async fn(_defer) {
-    out.ev.sync(out.stream.subscribe())
-    out.stream.write(bytes.to_fixedarray()).unwrap_or_error()
+  @promise.spawn(async fn() {
+    let array = FixedArray::make(bytes.length(), b'\x00')
+    array.blit_from_bytesview(0, bytes)
+    self.ev.sync(self.stream.subscribe())
+    self.stream.write(array).unwrap_or_error()
   })
-}
-
-///|
-impl @stream.OutputStream for Out with writable(self) {
-  not(self.dropped) && self.stream.check_write() is Ok(_)
 }
 
 ///|
